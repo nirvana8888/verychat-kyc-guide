@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2차 KYC & 마이그레이션 안내 · VeryChat</title>
+<meta name="description" content="VeryChat 2차 KYC 및 마이그레이션 안내 — 대상 조건, 신분증, 마이그레이션 방식, 자주 묻는 질문.">
+<script>
+  /* Detect browser language before render: Korean browsers → ko, otherwise → en. Prevents a flash of the wrong language. */
+  (function () {
+    var nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+    var lang = nav.indexOf('ko') === 0 ? 'ko' : 'en';
+    document.documentElement.setAttribute('data-lang', lang);
+    document.documentElement.setAttribute('lang', lang);
+  })();
+</script>
+<style>
+  /* ── Very Design System tokens (mirror of _very-design-system/very-design-system.css) ── */
+  :root, .light {
+    --very-50:#fff2f3; --very-100:#ffdfe1; --very-200:#ffb8ba; --very-300:#ff9195;
+    --very-400:#ff8a91; --very-500:#ff6d75; --very-600:#e64f58; --very-700:#c7353e;
+    --very-800:#a0262f; --very-900:#7a161c;
+    --gray-50:#f8fafc; --gray-100:#f1f5f9; --gray-200:#e2e8f0; --gray-300:#cbd5e1;
+    --gray-400:#94a3b8; --gray-500:#64748b; --gray-600:#475569; --gray-700:#334155;
+    --gray-800:#1e293b; --gray-900:#0f172a;
+    --status-success:#20c36a; --status-error:#ef4444; --status-warning:#f59e0b; --status-info:#5d92d0;
+    --background:#f6f7fb; --foreground:#0f172a; --card:#ffffff; --card-foreground:#0f172a;
+    --primary:#ff6d75; --primary-foreground:#ffffff; --secondary:#fff1f2; --secondary-foreground:#475569;
+    --muted:#f1f5f9; --muted-foreground:#64748b; --accent:#f2f6ff; --accent-foreground:#334155;
+    --destructive:#ef4444; --border:#e2e8f0; --input:#e2e8f0;
+    --font-family-body:"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+    --space-xs:4px; --space-sm:8px; --space-md:12px; --space-lg:16px; --space-xl:24px;
+    --space-2xl:32px; --space-3xl:48px; --space-4xl:64px;
+    --token-radius-sm:4px; --token-radius-md:8px; --token-radius-lg:12px; --token-radius-xl:16px; --token-radius-full:9999px;
+    --shadow-sm:0 6px 18px rgba(15,23,42,0.04); --shadow-md:0 10px 24px rgba(15,23,42,0.06);
+    --shadow-lg:0 18px 40px rgba(15,23,42,0.08); --shadow-xl:0 24px 60px rgba(15,23,42,0.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background:#171b25; --foreground:#f8fafc; --card:#1f2329; --card-foreground:#f8fafc;
+      --primary:#ff6d75; --primary-foreground:#ffffff; --secondary:#2d1f20; --secondary-foreground:#f1f5f9;
+      --muted:#1e293b; --muted-foreground:#94a3b8; --accent:#1e293b; --accent-foreground:#f1f5f9;
+      --border:#334155; --input:#334155;
+      --shadow-sm:0 6px 18px rgba(0,0,0,0.2); --shadow-md:0 10px 24px rgba(0,0,0,0.25);
+      --shadow-lg:0 18px 40px rgba(0,0,0,0.3); --shadow-xl:0 24px 60px rgba(0,0,0,0.4);
+    }
+  }
+
+  /* ── Reset / base ── */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-family-body);
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 400;
+    padding-bottom: var(--space-4xl);
+  }
+
+  /* ── i18n toggle visibility ── */
+  html[data-lang="ko"] .l-en { display: none !important; }
+  html[data-lang="en"] .l-ko { display: none !important; }
+
+  /* ── Top bar ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    height: 64px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 var(--space-lg);
+    background: color-mix(in srgb, var(--card) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    position: absolute; left: var(--space-lg); top: 50%; transform: translateY(-50%);
+    display: flex; align-items: center; gap: var(--space-sm); font-weight: 600; font-size: 16px;
+  }
+  @media (max-width: 480px) { .brand { display: none; } }
+  .brand-dot { width: 12px; height: 12px; border-radius: var(--token-radius-full); background: var(--primary); }
+
+  .lang-toggle { display: inline-flex; background: var(--muted); border-radius: var(--token-radius-full); padding: 4px; gap: 4px; }
+  .lang-toggle button {
+    appearance: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    color: var(--muted-foreground);
+    padding: 6px 14px; border-radius: var(--token-radius-full);
+    background: transparent; transition: background .15s, color .15s;
+  }
+  .lang-toggle button[aria-pressed="true"] { background: var(--card); color: var(--foreground); box-shadow: var(--shadow-sm); }
+  .lang-toggle button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+  /* ── Layout ── */
+  main { max-width: 720px; margin: 0 auto; padding: var(--space-xl) var(--space-lg) 0; }
+  section { margin-top: var(--space-xl); }
+
+  /* ── Hero ── */
+  .hero {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--token-radius-xl);
+    box-shadow: var(--shadow-md);
+    padding: var(--space-2xl) var(--space-xl);
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 14px; font-weight: 500;
+    color: var(--primary);
+    background: var(--secondary);
+    padding: 6px 12px; border-radius: var(--token-radius-full);
+  }
+  .hero h1 { font-size: 28px; line-height: 36px; font-weight: 700; margin-top: var(--space-md); letter-spacing: -0.01em; }
+  .period {
+    display: flex; align-items: baseline; gap: var(--space-sm); flex-wrap: wrap;
+    margin-top: var(--space-lg);
+    font-size: 20px; line-height: 28px; font-weight: 600; color: var(--primary);
+  }
+  .period .label { font-size: 14px; font-weight: 500; color: var(--muted-foreground); }
+  .hero p.sub { margin-top: var(--space-md); color: var(--muted-foreground); }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--token-radius-xl);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-xl);
+  }
+  .card h2 { font-size: 20px; line-height: 28px; font-weight: 600; }
+  .card .eyebrow { font-size: 14px; font-weight: 500; color: var(--primary); margin-bottom: 4px; }
+
+  .list { list-style: none; margin-top: var(--space-md); display: flex; flex-direction: column; gap: var(--space-md); }
+  .list li { display: flex; gap: var(--space-md); align-items: flex-start; }
+  .list .mark {
+    flex: none; width: 24px; height: 24px; border-radius: var(--token-radius-full);
+    display: grid; place-items: center; font-size: 13px; font-weight: 700; margin-top: 1px;
+  }
+  .mark.dot { background: var(--muted); color: var(--muted-foreground); }
+  .mark.ok  { background: color-mix(in srgb, var(--status-success) 16%, transparent); color: var(--status-success); }
+  .mark.no  { background: color-mix(in srgb, var(--status-error) 16%, transparent); color: var(--status-error); }
+  .list strong { font-weight: 600; }
+  .list .desc { color: var(--muted-foreground); font-size: 14px; line-height: 20px; margin-top: 2px; }
+
+  /* ── Do / Don't grid ── */
+  .dd { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); margin-top: var(--space-md); }
+  @media (max-width: 560px) { .dd { grid-template-columns: 1fr; } }
+  .dd .panel { border: 1px solid var(--border); border-radius: var(--token-radius-lg); padding: var(--space-lg); }
+  .dd .panel.ok { background: color-mix(in srgb, var(--status-success) 6%, var(--card)); }
+  .dd .panel.no { background: color-mix(in srgb, var(--status-error) 6%, var(--card)); }
+  .dd .head { display: flex; align-items: center; gap: var(--space-sm); font-weight: 600; font-size: 14px; }
+  .dd .head .ico { font-size: 16px; }
+  .dd .panel.ok .head { color: var(--status-success); }
+  .dd .panel.no .head { color: var(--status-error); }
+  .dd .items { margin-top: var(--space-sm); color: var(--card-foreground); font-size: 14px; line-height: 22px; }
+  .subhead { font-size: 14px; font-weight: 600; color: var(--muted-foreground); margin-bottom: var(--space-sm); }
+  .mark.idx { background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--primary); }
+
+  /* ── Photo guide ── */
+  .shots { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); margin-top: var(--space-md); }
+  @media (max-width: 560px) { .shots { grid-template-columns: 1fr; } }
+  .shot { border: 1px solid var(--border); border-radius: var(--token-radius-lg); padding: var(--space-md); background: var(--card); }
+  /* .frame is the swap target — replace the inner <svg> with <img src="..."> to use a real sample photo */
+  .frame { color: var(--gray-400); background: var(--muted); border-radius: var(--token-radius-md); aspect-ratio: 4 / 3; display: grid; place-items: center; overflow: hidden; }
+  .frame svg { width: 80%; height: auto; display: block; }
+  .frame img { width: 100%; height: 100%; object-fit: contain; }
+  .shot .cap { margin-top: var(--space-md); }
+  .shot .cap strong { display: inline-flex; align-items: center; gap: var(--space-sm); font-weight: 600; }
+  .shot .cap .n { width: 22px; height: 22px; border-radius: var(--token-radius-full); background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--primary); display: inline-grid; place-items: center; font-size: 13px; font-weight: 700; }
+  .shot .cap p { color: var(--muted-foreground); font-size: 14px; line-height: 20px; margin-top: var(--space-sm); }
+  .checks { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); margin-top: var(--space-xl); padding-top: var(--space-lg); border-top: 1px solid var(--border); }
+  @media (max-width: 560px) { .checks { grid-template-columns: 1fr; gap: var(--space-md); } }
+  .checks .subhead.ok { color: var(--status-success); }
+  .checks .subhead.no { color: var(--status-error); }
+  .checks .list li { font-size: 14px; line-height: 20px; }
+  .goodtips { margin-top: var(--space-xl); }
+  .badcases { margin-top: var(--space-xl); padding-top: var(--space-lg); border-top: 1px solid var(--border); }
+  .badgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-md); margin-top: var(--space-md); }
+  @media (max-width: 760px) { .badgrid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 400px) { .badgrid { grid-template-columns: 1fr; } }
+  .badcard { border: 1px solid var(--border); border-radius: var(--token-radius-lg); overflow: hidden; background: var(--card); }
+  .badcard .pic { aspect-ratio: 4 / 3; background: var(--muted); }
+  .badcard .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .badcard .meta { padding: var(--space-md); }
+  .badcard .meta .t { display: flex; align-items: center; gap: var(--space-sm); font-weight: 600; font-size: 14px; line-height: 20px; }
+  .badcard .meta .t .n { flex: none; width: 20px; height: 20px; border-radius: var(--token-radius-full); background: color-mix(in srgb, var(--status-error) 16%, transparent); color: var(--status-error); display: inline-grid; place-items: center; font-size: 12px; font-weight: 700; }
+  .badcard .meta p { color: var(--muted-foreground); font-size: 13px; line-height: 18px; margin-top: 6px; }
+
+  /* ── Callout (start here) ── */
+  .callout {
+    display: flex; gap: var(--space-md); align-items: flex-start;
+    background: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: var(--token-radius-xl);
+    padding: var(--space-xl);
+  }
+  .callout .num {
+    flex: none; width: 40px; height: 40px; border-radius: var(--token-radius-full);
+    background: color-mix(in srgb, var(--primary) 16%, transparent);
+    display: grid; place-items: center; font-size: 20px;
+  }
+  .callout h2 { font-size: 18px; line-height: 26px; font-weight: 600; }
+  .callout p { color: var(--accent-foreground); margin-top: 4px; }
+  .callout .pin { color: var(--primary); font-weight: 600; }
+
+  /* ── Note (already completed) ── */
+  .note {
+    display: flex; gap: var(--space-md); align-items: flex-start;
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--token-radius-xl);
+    padding: var(--space-xl);
+  }
+  .note .ico-badge {
+    flex: none; width: 40px; height: 40px; border-radius: var(--token-radius-full);
+    background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--primary);
+    display: grid; place-items: center; font-size: 18px; font-weight: 700;
+  }
+  .note h2 { font-size: 18px; line-height: 26px; font-weight: 600; }
+  .note p { color: var(--secondary-foreground); margin-top: 4px; }
+  .note .em { color: var(--primary); font-weight: 600; }
+
+  /* ── FAQ ── */
+  .faq { margin-top: var(--space-md); display: flex; flex-direction: column; gap: var(--space-sm); }
+  details {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--token-radius-lg); padding: var(--space-md) var(--space-lg);
+  }
+  details[open] { box-shadow: var(--shadow-sm); }
+  summary {
+    list-style: none; cursor: pointer; font-weight: 600; font-size: 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary .chev { flex: none; color: var(--muted-foreground); transition: transform .18s; }
+  details[open] summary .chev { transform: rotate(180deg); }
+  details .answer { margin-top: var(--space-md); color: var(--muted-foreground); line-height: 24px; }
+  summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; border-radius: var(--token-radius-sm); }
+
+  /* ── Section title ── */
+  .sec-title { font-size: 14px; font-weight: 600; color: var(--muted-foreground); margin: 0 0 var(--space-md) 4px; letter-spacing: 0.02em; text-transform: uppercase; }
+
+  footer { max-width: 720px; margin: var(--space-3xl) auto 0; padding: 0 var(--space-lg); text-align: center; color: var(--muted-foreground); font-size: 14px; line-height: 20px; }
+  footer .sep { width: 40px; height: 3px; background: var(--primary); border-radius: var(--token-radius-full); margin: 0 auto var(--space-lg); }
+</style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand"><span class="brand-dot"></span> VeryChat</div>
+    <div class="lang-toggle" role="group" aria-label="Language">
+      <button type="button" data-lang-btn="ko" aria-pressed="true">한국어</button>
+      <button type="button" data-lang-btn="en" aria-pressed="false">English</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Hero -->
+    <div class="hero">
+      <span class="badge">2026 · <span class="l-ko">2차 KYC</span><span class="l-en">2nd KYC</span></span>
+      <h1>
+        <span class="l-ko">2차 KYC &amp; 마이그레이션 안내</span>
+        <span class="l-en">2nd KYC &amp; Migration Guide</span>
+      </h1>
+      <div class="period">
+        <span class="label"><span class="l-ko">진행 기간</span><span class="l-en">Period</span></span>
+        <span class="l-ko">6월 30일 – 7월 말 (한 달간)</span>
+        <span class="l-en">June 30 – End of July (one month)</span>
+      </div>
+      <p class="sub">
+        <span class="l-ko">6월 22일 스냅샷 기준 500 VERY를 보유한 유저를 대상으로 진행됩니다. 아래 내용을 확인하고 기간 내에 KYC를 제출해 주세요.</span>
+        <span class="l-en">For users who held 500 VERY at the June 22 snapshot. Please review the details below and submit your KYC within the period.</span>
+      </p>
+    </div>
+
+    <!-- Eligibility -->
+    <section>
+      <p class="sec-title"><span class="l-ko">대상 조건</span><span class="l-en">Eligibility</span></p>
+      <div class="card">
+        <ul class="list">
+          <li>
+            <span class="mark dot">✓</span>
+            <div>
+              <strong><span class="l-ko">6월 22일 스냅샷 시점 기준 500 VERY 보유</span><span class="l-en">Held 500 VERY as of the June 22 snapshot</span></strong>
+            </div>
+          </li>
+          <li>
+            <span class="mark dot">✓</span>
+            <div>
+              <strong><span class="l-ko">어뷰징으로 의심되는 계정은 제외</span><span class="l-en">Accounts suspected of abuse are excluded</span></strong>
+            </div>
+          </li>
+          <li>
+            <span class="mark no">✕</span>
+            <div>
+              <strong><span class="l-ko">미성년자 참여 불가 · 중국·미국에서는 KYC 불가</span><span class="l-en">Minors are not eligible · KYC is unavailable in China and the United States</span></strong>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Accepted ID -->
+    <section>
+      <p class="sec-title"><span class="l-ko">신분증 안내</span><span class="l-en">Accepted ID</span></p>
+      <div class="card">
+        <h2><span class="l-ko">어떤 신분증을 쓸 수 있나요?</span><span class="l-en">Which ID can I use?</span></h2>
+        <div class="dd">
+          <div class="panel ok">
+            <div class="head"><span class="ico">✅</span><span class="l-ko">사용 가능</span><span class="l-en">Accepted</span></div>
+            <div class="items">
+              <span class="l-ko">국가 공인 신분증<br>여권 · 주민등록증 · 운전면허증</span>
+              <span class="l-en">Government-issued photo ID<br>Passport · National ID card · Driver's license</span>
+            </div>
+          </div>
+          <div class="panel no">
+            <div class="head"><span class="ico">⛔</span><span class="l-ko">사용 불가</span><span class="l-en">Not accepted</span></div>
+            <div class="items">
+              <span class="l-ko">종이에 직접 프린트한 형태의 신분증</span>
+              <span class="l-en">IDs printed out on paper</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Photo guide -->
+    <section>
+      <p class="sec-title"><span class="l-ko">제출 사진 가이드</span><span class="l-en">Photo guide</span></p>
+      <div class="card">
+        <h2><span class="l-ko">이렇게 촬영해 주세요</span><span class="l-en">How to take your photos</span></h2>
+        <div class="shots">
+
+          <div class="shot">
+            <div class="frame">
+              <img src="assets/kyc-photo-face-id.png" alt="얼굴과 신분증을 함께 든 올바른 예시 / Correct example: face with ID" loading="lazy">
+            </div>
+            <div class="cap">
+              <strong><span class="n">1</span><span class="l-ko">얼굴 + 신분증</span><span class="l-en">Face + ID</span></strong>
+              <p><span class="l-ko">신분증으로 얼굴을 가리지 말고, 얼굴과 신분증이 한 프레임에 모두 또렷하게 보이도록 촬영하세요.</span><span class="l-en">Don't let the ID cover your face — keep both your face and the ID clearly visible in one frame.</span></p>
+            </div>
+          </div>
+
+          <div class="shot">
+            <div class="frame">
+              <img src="assets/kyc-photo-id-closeup.png" alt="신분증 클로즈업 올바른 예시 / Correct example: ID close-up" loading="lazy">
+            </div>
+            <div class="cap">
+              <strong><span class="n">2</span><span class="l-ko">신분증 클로즈업</span><span class="l-en">ID close-up</span></strong>
+              <p><span class="l-ko">신분증만 가까이서, 네 모서리가 모두 보이고 글자가 선명하게 촬영하세요.</span><span class="l-en">The ID alone, up close, with all four corners in frame and the text sharp.</span></p>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="goodtips">
+          <p class="subhead ok">✅ <span class="l-ko">권장</span><span class="l-en">Do</span></p>
+          <ul class="list">
+            <li><span class="mark ok">✓</span><div><span class="l-ko">밝은 곳에서, 빛 반사·그림자 없이 촬영</span><span class="l-en">Shoot in a well-lit place, free of glare and shadows</span></div></li>
+            <li><span class="mark ok">✓</span><div><span class="l-ko">신분증 네 모서리가 모두 프레임 안에 보이게</span><span class="l-en">Keep all four corners of the ID inside the frame</span></div></li>
+            <li><span class="mark ok">✓</span><div><span class="l-ko">글자가 또렷하게 읽히도록 초점 맞추기</span><span class="l-en">Focus so the text is clearly readable</span></div></li>
+          </ul>
+        </div>
+
+        <div class="badcases">
+          <p class="subhead no">⛔ <span class="l-ko">이런 사진은 피해주세요</span><span class="l-en">Avoid these — examples that get rejected</span></p>
+          <div class="badgrid">
+
+            <div class="badcard">
+              <div class="pic"><img src="assets/bad-1-too-far.png" alt="너무 멀리서 촬영한 잘못된 예시" loading="lazy"></div>
+              <div class="meta">
+                <div class="t"><span class="n">1</span><span class="l-ko">너무 멀리서 촬영</span><span class="l-en">Taken too far away</span></div>
+                <p><span class="l-ko">얼굴과 신분증이 너무 작게 보여 식별이 어려워요.</span><span class="l-en">Face and ID appear too small to identify.</span></p>
+              </div>
+            </div>
+
+            <div class="badcard">
+              <div class="pic"><img src="assets/bad-2-too-close.png" alt="너무 가까이서 촬영한 잘못된 예시" loading="lazy"></div>
+              <div class="meta">
+                <div class="t"><span class="n">2</span><span class="l-ko">너무 가까이서 촬영</span><span class="l-en">Taken too close</span></div>
+                <p><span class="l-ko">신분증의 일부가 잘려 전체 정보 확인이 어려워요.</span><span class="l-en">Part of the ID is cut off, so the full info can't be checked.</span></p>
+              </div>
+            </div>
+
+            <div class="badcard">
+              <div class="pic"><img src="assets/bad-3-blurry.png" alt="초점이 맞지 않은 잘못된 예시" loading="lazy"></div>
+              <div class="meta">
+                <div class="t"><span class="n">3</span><span class="l-ko">초점이 맞지 않음</span><span class="l-en">Out of focus</span></div>
+                <p><span class="l-ko">흐릿해서 얼굴과 신분증의 정보를 확인할 수 없어요.</span><span class="l-en">Too blurry to read the face or the ID details.</span></p>
+              </div>
+            </div>
+
+            <div class="badcard">
+              <div class="pic"><img src="assets/bad-4-backlight.png" alt="역광·조명 불량 잘못된 예시" loading="lazy"></div>
+              <div class="meta">
+                <div class="t"><span class="n">4</span><span class="l-ko">역광 / 조명 불량</span><span class="l-en">Backlight / poor lighting</span></div>
+                <p><span class="l-ko">얼굴이 어둡거나 빛이 강해 식별이 어려워요.</span><span class="l-en">The face is too dark or washed out to identify.</span></p>
+              </div>
+            </div>
+
+            <div class="badcard">
+              <div class="pic"><img src="assets/bad-5-tilted.png" alt="신분증이 기울어진 잘못된 예시" loading="lazy"></div>
+              <div class="meta">
+                <div class="t"><span class="n">5</span><span class="l-ko">신분증이 기울어짐</span><span class="l-en">ID is tilted</span></div>
+                <p><span class="l-ko">수평이 맞지 않아 정보 확인이 어려워요.</span><span class="l-en">It isn't level, making the info hard to read.</span></p>
+              </div>
+            </div>
+
+            <div class="badcard">
+              <div class="pic"><img src="assets/bad-6-glare.png" alt="빛 반사·플래시 사용 잘못된 예시" loading="lazy"></div>
+              <div class="meta">
+                <div class="t"><span class="n">6</span><span class="l-ko">빛 반사 / 플래시 사용</span><span class="l-en">Glare / flash used</span></div>
+                <p><span class="l-ko">빛 반사로 정보가 가려져 식별이 어려워요.</span><span class="l-en">Reflections hide the information.</span></p>
+              </div>
+            </div>
+
+            <div class="badcard">
+              <div class="pic"><img src="assets/bad-7-covered.png" alt="손가락으로 정보를 가린 잘못된 예시" loading="lazy"></div>
+              <div class="meta">
+                <div class="t"><span class="n">7</span><span class="l-ko">가림 / 일부 정보 노출</span><span class="l-en">Covered / partly hidden</span></div>
+                <p><span class="l-ko">손가락 등으로 가려져 전체 정보 확인이 어려워요.</span><span class="l-en">Fingers or objects block part of the info.</span></p>
+              </div>
+            </div>
+
+            <div class="badcard">
+              <div class="pic"><img src="assets/bad-8-screenshot.png" alt="스크린캡쳐·저화질 잘못된 예시" loading="lazy"></div>
+              <div class="meta">
+                <div class="t"><span class="n">8</span><span class="l-ko">스크린캡쳐 / 화질 저하</span><span class="l-en">Screenshot / low quality</span></div>
+                <p><span class="l-ko">화면 캡쳐나 저화질 이미지는 인증이 반려될 수 있어요.</span><span class="l-en">Screen captures or low-res images may be rejected.</span></p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Migration -->
+    <section>
+      <p class="sec-title"><span class="l-ko">마이그레이션</span><span class="l-en">Migration</span></p>
+      <div class="card">
+        <ul class="list">
+          <li>
+            <span class="mark dot">→</span>
+            <div>
+              <strong><span class="l-ko">마이그레이션 시점에 보유한 VERY 전량이 베리월렛으로 마이그레이션됩니다</span><span class="l-en">Your entire VERY balance at the time of migration is migrated to your VeryWallet</span></strong>
+              <div class="desc"><span class="l-ko">스냅샷(6/22)은 대상 자격 기준이며, 실제 마이그레이션 수량은 마이그레이션 시점의 잔액입니다.</span><span class="l-en">The June 22 snapshot only determines eligibility; the amount migrated is your balance at migration time.</span></div>
+            </div>
+          </li>
+          <li>
+            <span class="mark dot">⏱</span>
+            <div>
+              <strong><span class="l-ko">제출 기간 종료 후 2주 이내 전체 대상자에게 일괄 마이그레이션</span><span class="l-en">Migrated to all qualified users in a single batch within 2 weeks after the submission period ends</span></strong>
+              <div class="desc"><span class="l-ko">승인 직후 개별 마이그레이션이 아닙니다.</span><span class="l-en">Not migrated immediately after each approval.</span></div>
+            </div>
+          </li>
+          <li>
+            <span class="mark no">!</span>
+            <div>
+              <strong><span class="l-ko">VERY는 베리월렛으로만 마이그레이션됩니다 — 베리월렛이 없으면 KYC를 제출할 수 없습니다</span><span class="l-en">VERY is migrated only to your VeryWallet — without one, you cannot submit KYC</span></strong>
+              <div class="desc"><span class="l-ko">KYC 제출 전에 베리월렛을 먼저 생성해 주세요.</span><span class="l-en">Please set up your VeryWallet before submitting KYC.</span></div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Where to start -->
+    <section>
+      <p class="sec-title"><span class="l-ko">시작하기</span><span class="l-en">Where to start</span></p>
+      <div class="callout">
+        <span class="num">📍</span>
+        <div>
+          <h2><span class="l-ko">KYC는 어디서 시작하나요?</span><span class="l-en">Where do I start KYC?</span></h2>
+          <p>
+            <span class="l-ko"><span class="pin">마이닝(채굴) 페이지 하단</span>에 KYC 진입 배너가 표시됩니다. 배너를 눌러 제출을 시작하세요.</span>
+            <span class="l-en">The KYC entry banner appears at the <span class="pin">bottom of the Mining page</span>. Tap the banner to begin.</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Already completed KYC -->
+    <section>
+      <p class="sec-title"><span class="l-ko">이미 KYC를 완료하셨다면</span><span class="l-en">Already completed KYC?</span></p>
+      <div class="note">
+        <span class="ico-badge">✓</span>
+        <div>
+          <h2><span class="l-ko">노드 KYC · 1차 KYC 완료자 안내</span><span class="l-en">For Node &amp; 1st KYC completers</span></h2>
+          <p>
+            <span class="l-ko">KYC를 다시 진행하실 필요는 없습니다. 다만 마이그레이션을 원하시면 <span class="em">마이그레이션 신청은 별도로 진행</span>하셔야 합니다.</span>
+            <span class="l-en">You don't need to redo KYC. However, to receive your migration, you must still <span class="em">submit a migration request</span> separately.</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section>
+      <p class="sec-title"><span class="l-ko">자주 묻는 질문</span><span class="l-en">FAQ</span></p>
+      <div class="faq">
+
+        <details>
+          <summary>
+            <span><span class="l-ko">KYC가 뭔가요?</span><span class="l-en">What is KYC?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">KYC(Know Your Customer)는 신분증으로 실제 본인임을 확인하는 본인 인증 절차입니다. VERY 마이그레이션을 위해 필요합니다.</span><span class="l-en">KYC (Know Your Customer) is an identity verification process that confirms you are a real person using a government-issued ID. It is required to migrate your VERY.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">KYC는 왜 꼭 해야 하나요?</span><span class="l-en">Why is KYC required?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">베리챗 생태계의 공정성과 투명성을 보장하고, 어뷰징을 방지하기 위해 반드시 필요합니다.</span><span class="l-en">It is essential to ensure the fairness and transparency of the VeryChat ecosystem and to prevent abuse.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">채굴한 베리는 바로 들어오나요?</span><span class="l-en">Does my mined VERY arrive right away?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">아니요. KYC 제출 기간(6/30~7월 말)이 종료된 후 2주 이내에 전체 대상자를 대상으로 일괄 마이그레이션됩니다. 승인 직후 개별 마이그레이션이 아닙니다.</span><span class="l-en">No. VERY is migrated to all qualified users in a single batch within 2 weeks after the submission period (June 30 – end of July) ends — not immediately after each approval.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">6월 22일 이후 채굴한 VERY는 어떻게 되나요?</span><span class="l-en">What happens to VERY mined after June 22?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">마이그레이션 시점에 보유한 전량이 지갑으로 마이그레이션됩니다. 스냅샷(6/22)은 대상 자격 기준일 뿐이며, 실제 마이그레이션 수량은 마이그레이션 시점의 잔액입니다.</span><span class="l-en">Your full balance at the time of migration is migrated. The June 22 snapshot only determines eligibility — the amount migrated is your balance at migration time.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">베리월렛이 꼭 있어야 하나요?</span><span class="l-en">Do I really need a VeryWallet?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">네. VERY는 베리월렛으로만 마이그레이션되며, 베리월렛이 없으면 KYC 자체를 제출할 수 없습니다. KYC 제출 전에 먼저 생성해 주세요.</span><span class="l-en">Yes. VERY is migrated only to your VeryWallet, and without one you cannot even submit KYC. Please set it up before submitting.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">500 VERY가 안 되면 이번엔 대상이 아닌가요?</span><span class="l-en">If I don't have 500 VERY, am I excluded this round?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">이번 2차는 6월 22일 스냅샷 기준 500 VERY 보유자가 대상입니다. 조건에 못 미쳤다면 이번 차수 대상은 아니지만, 3차 KYC가 예정되어 있습니다.</span><span class="l-en">The 2nd round is for users who held 500 VERY at the June 22 snapshot. If you didn't meet it, you're not eligible this round — but a 3rd KYC is planned.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">여권만 사용 가능한가요?</span><span class="l-en">Can I only use a passport?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">아니요. 여권, 주민등록증, 운전면허증 등 국가 공인 신분증을 사용할 수 있습니다. 다만 종이에 직접 프린트한 형태의 신분증은 사용할 수 없습니다.</span><span class="l-en">No. You can use any government-issued ID — passport, national ID card, or driver's license. However, IDs printed out on paper are not accepted.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">어떤 사진을 제출해야 하나요?</span><span class="l-en">What kind of photo should I submit?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">두 장이 필요합니다 — ① 본인 얼굴과 신분증을 함께 든 사진(신분증으로 얼굴을 가리지 말고, 얼굴과 신분증이 모두 선명하게 보이도록), ② 신분증을 가까이서 선명하게 촬영한 클로즈업 사진. 여권·주민등록증·운전면허증 등 국가 공인 신분증 실물이어야 하며, 종이에 프린트한 신분증은 인정되지 않습니다.</span><span class="l-en">Two photos are required — (1) a photo of you holding your ID next to your face (don't let the ID cover your face — both your face and the ID must be clearly visible), and (2) a clear close-up photo of the ID itself. It must be a real government-issued ID (passport, national ID, or driver's license); printed paper copies are not accepted.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">아이폰으로 제출한 사진이 열리지 않아요.</span><span class="l-en">My iPhone photo won't open after submitting.</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">아이폰 기본 사진 형식(HEIC) 때문일 수 있습니다. 설정 &gt; 카메라 &gt; 포맷에서 '높은 호환성(JPEG)'으로 변경한 뒤 다시 촬영하거나, 사진을 스크린샷으로 저장해 제출해 보세요.</span><span class="l-en">This may be due to the iPhone's default HEIC photo format. Go to Settings &gt; Camera &gt; Formats and choose "Most Compatible (JPEG)," then retake the photo — or save it as a screenshot and submit that.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">미성년자도 인증할 수 있나요?</span><span class="l-en">Can minors complete verification?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">아니요. 미성년자는 KYC 인증에 참여하실 수 없습니다.</span><span class="l-en">No. Minors are not eligible for KYC verification.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">어떤 국가에서든 인증 가능한가요?</span><span class="l-en">Can I verify from any country?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">중국과 미국에서는 KYC를 진행하실 수 없습니다. 그 외 지역에서는 가능합니다.</span><span class="l-en">KYC is not available in China or the United States. It is available in other regions.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">인증 결과는 언제, 어떻게 확인하나요?</span><span class="l-en">When and how will I get my result?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">KYC 결과(승인/반려)는 앱 내 메세지로 안내됩니다. VERY 마이그레이션은 제출 기간이 종료된 후 2주 이내에 일괄 진행됩니다.</span><span class="l-en">Your KYC result (approved or rejected) is delivered through an in-app message. VERY migration is done in a single batch within 2 weeks after the submission period ends.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">인증에 실패하면 어떻게 하나요?</span><span class="l-en">What if my verification fails?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">반려 결과와 사유는 앱 내 메세지로 안내되며, 같은 기간 내에 다시 제출하실 수 있습니다. 이번 기간에 통과하지 못하시더라도 대상 자격은 소멸되지 않으며, 3차 KYC가 예정되어 있습니다.</span><span class="l-en">The rejection and its reason are delivered through an in-app message, and you can resubmit within the same period. Even if you don't pass this time, your eligibility is not forfeited, and a 3rd KYC is planned.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">이번 기간에 제출하지 못하면 어떻게 되나요?</span><span class="l-en">What if I miss this period?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">대상 자격은 소멸되지 않습니다. 다음 차수에 진행하실 수 있습니다.</span><span class="l-en">Your eligibility is not forfeited — you can take part in the next round.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">다음 차수도 있나요?</span><span class="l-en">Will there be another round?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">3차 KYC가 예정되어 있습니다. 일정은 추후 공지를 통해 안내드립니다.</span><span class="l-en">A 3rd KYC is planned. The schedule will be announced later.</span></div>
+        </details>
+
+        <details>
+          <summary>
+            <span><span class="l-ko">노드 KYC나 1차 KYC를 완료했어요. 다시 해야 하나요?</span><span class="l-en">I completed Node KYC or the 1st KYC. Do I need to redo it?</span></span>
+            <span class="chev">⌄</span>
+          </summary>
+          <div class="answer"><span class="l-ko">KYC를 다시 진행하실 필요는 없습니다. 다만 마이그레이션을 원하시면 마이그레이션 신청은 별도로 진행하셔야 합니다.</span><span class="l-en">You don't need to redo KYC. However, to receive your migration, you must still submit a migration request.</span></div>
+        </details>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="sep"></div>
+    <p>
+      <span class="l-ko">본 안내는 운영 상황에 따라 변경될 수 있습니다. 최신 정보는 공식 공지를 확인해 주세요.</span>
+      <span class="l-en">This guide is subject to change depending on operations. Please check the official announcements for the latest information.</span>
+    </p>
+    <p style="margin-top:var(--space-sm)">© VeryChat</p>
+  </footer>
+
+  <script>
+    (function () {
+      var html = document.documentElement;
+      var buttons = document.querySelectorAll('[data-lang-btn]');
+      function setLang(lang) {
+        html.setAttribute('data-lang', lang);
+        html.setAttribute('lang', lang);
+        buttons.forEach(function (b) {
+          b.setAttribute('aria-pressed', b.getAttribute('data-lang-btn') === lang ? 'true' : 'false');
+        });
+      }
+      /* Sync the toggle buttons to the language already chosen by the head detection script (default ko). */
+      setLang(html.getAttribute('data-lang') === 'en' ? 'en' : 'ko');
+      buttons.forEach(function (b) {
+        b.addEventListener('click', function () { setLang(b.getAttribute('data-lang-btn')); });
+      });
+    })();
+  </script>
+
+</body>
+</html>

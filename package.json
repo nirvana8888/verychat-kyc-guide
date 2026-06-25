@@ -1,0 +1,12 @@
+{
+  "name": "verychat-kyc-guide",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VeryChat 2nd KYC & Migration guide page (static, bilingual KO/EN).",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
